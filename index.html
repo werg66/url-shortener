@@ -9,18 +9,61 @@
     input, button { padding: 10px; margin-top: 10px; width: 80%; max-width: 400px; }
     #result a { color: blue; }
   </style>
-
-  <!-- 🔁 Instant Redirect Script -->
   <script>
     const params = new URLSearchParams(window.location.search);
     const code = params.get("code");
     if (code) {
-      const firebaseScript = document.createElement('script');
-      firebaseScript.type = "module";
-      firebaseScript.innerHTML = `
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getDatabase, ref, get, child } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-
+      document.write("<p>Redirecting...</p>");
+      const script = document.createElement("script");
+      script.src = "https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js";
+      script.onload = () => {
+        const dbScript = document.createElement("script");
+        dbScript.src = "https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js";
+        dbScript.onload = () => {
+          const firebaseConfig = {
+            apiKey: "AIzaSyDb5D1OXgcTquPaNiUQCzL7oEA4WJgW40g",
+            authDomain: "short-8b248.firebaseapp.com",
+            projectId: "short-8b248",
+            storageBucket: "short-8b248.appspot.com",
+            messagingSenderId: "740146772510",
+            appId: "1:740146772510:web:5666a1f51eedab6c16cc0f",
+            measurementId: "G-WGZJ8WXXNZ",
+            databaseURL: "https://short-8b248-default-rtdb.firebaseio.com/"
+          };
+          firebase.initializeApp(firebaseConfig);
+          const db = firebase.database();
+          db.ref("urls/" + code).once("value").then(snapshot => {
+            if (snapshot.exists()) {
+              window.location.replace(snapshot.val());
+            } else {
+              document.body.innerHTML = "<h3>Invalid or expired short URL</h3>";
+            }
+          });
+        };
+        document.head.appendChild(dbScript);
+      };
+      document.head.appendChild(script);
+    }
+  </script>
+</head>
+<body>
+  <noscript>
+    <h3>Please enable JavaScript</h3>
+  </noscript>
+  <div id="tool">
+    <h2>Firebase URL Shortener</h2>
+    <input id="longUrl" placeholder="Paste your long URL here" />
+    <br>
+    <button onclick="shorten()">Generate Short Link</button>
+    <p id="result"></p>
+  </div>
+  <script>
+    const script = document.createElement("script");
+    script.src = "https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js";
+    script.onload = () => {
+      const dbScript = document.createElement("script");
+      dbScript.src = "https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js";
+      dbScript.onload = () => {
         const firebaseConfig = {
           apiKey: "AIzaSyDb5D1OXgcTquPaNiUQCzL7oEA4WJgW40g",
           authDomain: "short-8b248.firebaseapp.com",
@@ -31,62 +74,28 @@
           measurementId: "G-WGZJ8WXXNZ",
           databaseURL: "https://short-8b248-default-rtdb.firebaseio.com/"
         };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
+        window.shorten = function () {
+          const longUrl = document.getElementById("longUrl").value;
+          if (!longUrl) return alert("Please enter a valid URL.");
 
-        get(child(ref(db), "urls/" + "${code}")).then(snapshot => {
-          if (snapshot.exists()) {
-            window.location.href = snapshot.val();
-          } else {
-            document.body.innerHTML = "<h3>Invalid or expired short URL</h3>";
-          }
-        });
-      `;
-      document.head.appendChild(firebaseScript);
-    }
-  </script>
-</head>
-<body>
-  <h2>Firebase URL Shortener</h2>
-  <input id="longUrl" placeholder="Paste your long URL here" />
-  <br>
-  <button onclick="shorten()">Generate Short Link</button>
-  <p id="result"></p>
-
-  <!-- 🔗 Link Generation Code -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyDb5D1OXgcTquPaNiUQCzL7oEA4WJgW40g",
-      authDomain: "short-8b248.firebaseapp.com",
-      projectId: "short-8b248",
-      storageBucket: "short-8b248.appspot.com",
-      messagingSenderId: "740146772510",
-      appId: "1:740146772510:web:5666a1f51eedab6c16cc0f",
-      measurementId: "G-WGZJ8WXXNZ",
-      databaseURL: "https://short-8b248-default-rtdb.firebaseio.com/"
+          const shortCode = Math.random().toString(36).substring(2, 8);
+          db.ref("urls/" + shortCode).set(longUrl).then(() => {
+            const basePath = window.location.origin + window.location.pathname;
+            const shortUrl = `${basePath}?code=${shortCode}`;
+            document.getElementById("result").innerHTML =
+              `Short URL: <a href="${shortUrl}" target="_blank">${shortUrl}</a>`;
+          });
+        };
+      };
+      document.head.appendChild(dbScript);
     };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-
-    window.shorten = function () {
-      const longUrl = document.getElementById("longUrl").value;
-      if (!longUrl) return alert("Please enter a valid URL.");
-
-      const shortCode = Math.random().toString(36).substring(2, 8);
-      set(ref(db, "urls/" + shortCode), longUrl).then(() => {
-        const basePath = window.location.origin + window.location.pathname;
-        const shortUrl = `${basePath}?code=${shortCode}`;
-        document.getElementById("result").innerHTML =
-          `Short URL: <a href="${shortUrl}" target="_blank">${shortUrl}</a>`;
-      });
-    };
+    document.head.appendChild(script);
   </script>
 </body>
 </html>
+
 
 
