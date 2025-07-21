@@ -25,7 +25,7 @@
       apiKey: "AIzaSyDb5D1OXgcTquPaNiUQCzL7oEA4WJgW40g",
       authDomain: "short-8b248.firebaseapp.com",
       projectId: "short-8b248",
-      storageBucket: "short-8b248.firebasestorage.app",
+      storageBucket: "short-8b248.appspot.com",
       messagingSenderId: "740146772510",
       appId: "1:740146772510:web:5666a1f51eedab6c16cc0f",
       measurementId: "G-WGZJ8WXXNZ",
@@ -35,21 +35,29 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
+    // Redirect if short code present
     const params = new URLSearchParams(window.location.search);
     const code = params.get("code");
     if (code) {
       get(child(ref(db), "urls/" + code)).then(snapshot => {
-        if (snapshot.exists()) window.location.href = snapshot.val();
-        else document.body.innerHTML = "<h3>Invalid or expired short URL</h3>";
+        if (snapshot.exists()) {
+          window.location.href = snapshot.val();
+        } else {
+          document.body.innerHTML = "<h3>Invalid or expired short URL</h3>";
+        }
       });
     }
 
     window.shorten = function () {
       const longUrl = document.getElementById("longUrl").value;
       if (!longUrl) return alert("Please enter a valid URL.");
+
       const shortCode = Math.random().toString(36).substring(2, 8);
       set(ref(db, "urls/" + shortCode), longUrl).then(() => {
-        const shortUrl = `${window.location.origin}?code=${shortCode}`;
+        // ✅ Correct base path for GitHub Pages
+        const basePath = window.location.origin + window.location.pathname;
+        const shortUrl = `${basePath}?code=${shortCode}`;
+
         document.getElementById("result").innerHTML =
           `Short URL: <a href="${shortUrl}" target="_blank">${shortUrl}</a>`;
       });
