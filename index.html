@@ -13,7 +13,9 @@
     const params = new URLSearchParams(window.location.search);
     const code = params.get("code");
     if (code) {
-      document.write("<p>Redirecting...</p>");
+      // Stop rendering the rest of the page
+      document.documentElement.innerHTML = '<head><meta charset="UTF-8"><title>Redirecting...</title></head><body><p>Redirecting...</p></body>';
+      // Load Firebase scripts
       const script = document.createElement("script");
       script.src = "https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js";
       script.onload = () => {
