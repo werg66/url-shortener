@@ -9,6 +9,43 @@
     input, button { padding: 10px; margin-top: 10px; width: 80%; max-width: 400px; }
     #result a { color: blue; }
   </style>
+
+  <!-- 🔁 Instant Redirect Script -->
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get("code");
+    if (code) {
+      const firebaseScript = document.createElement('script');
+      firebaseScript.type = "module";
+      firebaseScript.innerHTML = `
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getDatabase, ref, get, child } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+        const firebaseConfig = {
+          apiKey: "AIzaSyDb5D1OXgcTquPaNiUQCzL7oEA4WJgW40g",
+          authDomain: "short-8b248.firebaseapp.com",
+          projectId: "short-8b248",
+          storageBucket: "short-8b248.appspot.com",
+          messagingSenderId: "740146772510",
+          appId: "1:740146772510:web:5666a1f51eedab6c16cc0f",
+          measurementId: "G-WGZJ8WXXNZ",
+          databaseURL: "https://short-8b248-default-rtdb.firebaseio.com/"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        get(child(ref(db), "urls/" + "${code}")).then(snapshot => {
+          if (snapshot.exists()) {
+            window.location.href = snapshot.val();
+          } else {
+            document.body.innerHTML = "<h3>Invalid or expired short URL</h3>";
+          }
+        });
+      `;
+      document.head.appendChild(firebaseScript);
+    }
+  </script>
 </head>
 <body>
   <h2>Firebase URL Shortener</h2>
@@ -17,9 +54,10 @@
   <button onclick="shorten()">Generate Short Link</button>
   <p id="result"></p>
 
+  <!-- 🔗 Link Generation Code -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getDatabase, ref, set, get, child } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+    import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDb5D1OXgcTquPaNiUQCzL7oEA4WJgW40g",
@@ -35,20 +73,6 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    // 🔁 Redirect logic
-    const params = new URLSearchParams(window.location.search);
-    const code = params.get("code");
-    if (code) {
-      get(child(ref(db), "urls/" + code)).then(snapshot => {
-        if (snapshot.exists()) {
-          window.location.href = snapshot.val();
-        } else {
-          document.body.innerHTML = "<h3>Invalid or expired short URL</h3>";
-        }
-      });
-    }
-
-    // 🔗 Shorten function
     window.shorten = function () {
       const longUrl = document.getElementById("longUrl").value;
       if (!longUrl) return alert("Please enter a valid URL.");
@@ -64,4 +88,5 @@
   </script>
 </body>
 </html>
+
 
